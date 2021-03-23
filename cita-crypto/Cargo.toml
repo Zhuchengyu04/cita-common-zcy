@@ -1,0 +1,18 @@
+[package]
+name = "cita-crypto"
+version = "0.1.0"
+authors = ["Rivtower Technologies <contact@rivtower.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+cita-crypto-trait = { path = "../cita-crypto-trait" }
+cita-ed25519 = { path = "../cita-ed25519", optional = true  }
+cita-secp256k1 = { path = "../cita-secp256k1", optional = true  }
+cita-sm2 = { path = "../cita-sm2", optional = true  }
+
+[features]
+default = []
+secp256k1 = ["cita-secp256k1", "cita-secp256k1/sha3hash"]
+ed25519 = ["cita-ed25519", "cita-ed25519/blake2bhash"]
+sm2 = ["cita-sm2", "cita-sm2/sm3hash"]

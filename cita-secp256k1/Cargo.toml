@@ -1,0 +1,26 @@
+[package]
+name = "cita-secp256k1"
+version = "0.6.0"
+authors = ["Rivtower Technologies <contact@rivtower.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+secp256k1 = {version = "0.15", features = ["rand", "recovery"]}
+lazy_static = "1.1"
+rustc-serialize = "0.3"
+cita-types = { path = "../cita-types" }
+hashable = { path = "../hashable" }
+cita-crypto-trait = { path = "../cita-crypto-trait" }
+rlp = { path = "../rlp" }
+rand = "0.6"
+serde = "1.0"
+
+[dev-dependencies]
+bincode = "0.8"
+
+[features]
+default = []
+sha3hash = ["hashable/sha3hash"]
+blake2bhash = ["hashable/blake2bhash"]
+sm3hash = ["hashable/sm3hash"]

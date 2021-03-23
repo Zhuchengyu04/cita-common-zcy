@@ -1,0 +1,20 @@
+[package]
+name = "jsonrpc-types"
+version = "0.1.0"
+authors = ["Rivtower Technologies <contact@rivtower.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+jsonrpc-types-internals = { path = "internals" }
+cita-types = { path = "../cita-types" }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+rustc-serialize = "0.3"
+
+[dev-dependencies]
+bincode = "0.8"
+
+[features]
+default = []

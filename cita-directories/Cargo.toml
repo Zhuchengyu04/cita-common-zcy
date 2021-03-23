@@ -1,0 +1,9 @@
+[package]
+name = "cita-directories"
+version = "0.1.0"
+authors = ["Rivtower Technologies <contact@rivtower.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+uuid = { version = "0.7", features = ["v4"] }

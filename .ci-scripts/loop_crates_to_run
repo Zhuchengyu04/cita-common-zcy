@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+
+set -xe -o pipefail
+
+CARGO_COMMAND=
+
+FEATURES_FOR_PUBSUB="rabbitmq zeromq kafka"
+
+CRATES_HAVE_RUN=".crates.have-run"
+
+DEFAULT_HASH="sha3hash"
+DEFAULT_CRYPTO="secp256k1"
+SELECT_HASH=
+SELECT_CRYPTO=
+
+UPLOAD_COVERAGE=
+
+function check_crates_list () {
+    find . -maxdepth 1 -mindepth 1 -type d \
+            | xargs -I {} basename {} \; \
+            | grep -v "^[.]" \
+            | grep -v "^target$" \
+            | while read crate; do
+        if [ $(grep -c "^${crate}$" "${CRATES_HAVE_RUN}") -eq 0 ]; then
+            # ignore cita-web3
+            if [ "^${crate}$" -nq "^cita-web3$" ]; then
+              echo "[Error] A new crate [${crate}] was added but did not added into this script [$0]."
+              exit 1
+            fi
+        fi
+    done
+    rm "${CRATES_HAVE_RUN}"
+}
+
+function record_crate_for_check () {
+    crate="${1}"
+    echo "${crate}" >> "${CRATES_HAVE_RUN}"
+}
+
+function cargo_run_build () {
+    export RUSTFLAGS='-F warnings -A deprecated'
+    CARGO_COMMAND="cargo test --no-run"
+    cargo_run_all
+    CARGO_COMMAND=
+    unset RUSTFLAGS
+}
+
+function upload_coverage () {
+    KCOV_TARGET="target/cov"
+    KCOV_FLAGS="--verify"
+    EXCLUDE="/usr/lib,/usr/include,$HOME/.cargo,$HOME/.multirust,rocksdb,secp256k1"
+    mkdir -p $KCOV_TARGET
+    echo "Cover RUST"
+    for FILE in `find target/debug -maxdepth 1 -perm -111 -type f ! -name "*.*"`
+    do
+        echo "[kcov]: ${FILE}"
+        kcov --exclude-pattern $EXCLUDE $KCOV_FLAGS $KCOV_TARGET $FILE || true
+    done
+    echo "kcov Done"
+    bash <(curl -s https://codecov.io/bash) && echo "Uploaded code coverage"
+}
+
+function cargo_run_test () {
+    export RUSTFLAGS="-F warnings -A deprecated"
+    CARGO_COMMAND="cargo test"
+    cargo_run_all
+    CARGO_COMMAND=
+    unset RUSTFLAGS
+    if [ "${UPLOAD_COVERAGE}" = "true" ]; then
+        upload_coverage
+    fi
+}
+
+function cargo_run_clippy () {
+    export RUSTFLAGS="-F warnings -A deprecated"
+    CARGO_COMMAND="cargo clippy"
+    cargo_run_all
+    CARGO_COMMAND=
+    unset RUSTFLAGS
+}
+
+function cargo_run () {
+    crate="${1}"
+    shift 1
+    currdir=$(pwd)
+    cd "${crate}"
+    ${CARGO_COMMAND} "$@"
+    cd "${currdir}"
+    record_crate_for_check "${crate}"
+}
+
+
+function cargo_run_all () {
+
+    [ -z "${CARGO_COMMAND}" ] && exit 1
+
+    cargo_run cita-common-benches
+
+    cargo_run cita-types
+    cargo_run error
+    cargo_run snappy
+    cargo_run cita-directories
+    cargo_run cita-crypto-trait
+
+    cargo_run rlp
+
+    cargo_run authority_manage
+
+    cargo_run pubsub
+
+    cargo_run blake2b
+
+    cargo_run util
+
+    cargo_run jsonrpc-types
+
+    for crate in hashable cita-merklehash cita-secp256k1 cita-ed25519 cita-sm2; do
+        cargo_run ${crate} --features "${SELECT_HASH}"
+    done
+
+    for crate in cita-crypto; do
+        cargo_run ${crate} --features "${SELECT_CRYPTO}"
+    done
+
+    for crate in libproto proof tx_pool jsonrpc-proto engine; do
+        cargo_run ${crate} --features "${SELECT_HASH} ${SELECT_CRYPTO}"
+    done
+}
+
+function check_args () {
+    local select_hash="$1"
+    local select_crypto="$2"
+    local upload_coverage="$3"
+    if [ -z "${select_hash}" ]; then
+        echo "[Info ] Use the default hash algorithm."
+        SELECT_HASH="${DEFAULT_HASH}"
+    elif [ "${select_hash}" = "sha3hash" ] \
+            || [ "${select_hash}" = "blake2bhash" ] \
+            || [ "${select_hash}" = "sm3hash" ]; then
+        SELECT_HASH="${select_hash}"
+        echo "[Info ] Select the hash algorithm [${SELECT_HASH}]."
+    else
+        echo "[ERROR] Unknown algorithm [${select_hash}]."
+        exit 1
+    fi
+    if [ -z "${select_crypto}" ]; then
+        echo "[Info ] Use the default crypto algorithm."
+        SELECT_CRYPTO="${DEFAULT_CRYPTO}"
+    elif [ "${select_crypto}" = "secp256k1" ] \
+            || [ "${select_crypto}" = "ed25519" ] \
+            || [ "${select_crypto}" = "sm2" ]; then
+        SELECT_CRYPTO="${select_crypto}"
+        echo "[Info ] Select the crypto algorithm [${SELECT_CRYPTO}]."
+    else
+        echo "[ERROR] Unknown algorithm [${select_crypto}]."
+        exit 1
+    fi
+    if [ -n "${upload_coverage}" ]; then
+        UPLOAD_COVERAGE="${upload_coverage}"
+    fi
+}
+
+function main () {
+    local currdir=$(pwd)
+    local action="$1"
+    shift 1
+    case ${action} in
+        build | test | clippy)
+            check_args "$@"
+            : > "${CRATES_HAVE_RUN}"
+            cargo_run_${action}
+            cd "${currdir}"
+            check_crates_list
+            ;;
+        *)
+            echo "[Error] Unknown action [${action}]."
+            exit 1
+            ;;
+    esac
+    cd "${currdir}"
+}
+
+main "$@"

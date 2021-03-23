@@ -1,0 +1,36 @@
+[workspace]
+
+members = [
+    "cita-common-benches",
+
+    "error",
+    "cita-types",
+    "snappy",
+    "cita-directories",
+    "util",
+
+    "pubsub",
+
+    "hashable",
+    "cita-merklehash",
+    "blake2b",
+    "cita-sm2",
+    "cita-secp256k1",
+    "cita-ed25519",
+    "cita-crypto-trait",
+    "cita-crypto",
+
+    "rlp",
+    "libproto",
+
+    "tx_pool",
+
+    "proof",
+    "authority_manage",
+
+    "jsonrpc-types",
+    "cita-web3",
+    "jsonrpc-proto",
+
+    "engine",
+]

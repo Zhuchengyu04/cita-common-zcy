@@ -1,0 +1,20 @@
+[package]
+name = "pubsub"
+version = "0.6.0"
+authors = ["Rivtower Technologies <contact@rivtower.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies.amqp]
+version = "0.1"
+default-features = false
+
+[dependencies]
+dotenv = "0.13.0"
+crossbeam-channel = "0.3.8"
+
+[features]
+default = []
+rabbitmq = []
+zeromq = []
+kafka = []

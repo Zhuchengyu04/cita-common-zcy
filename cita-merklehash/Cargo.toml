@@ -1,0 +1,18 @@
+[package]
+name = "cita-merklehash"
+version = "0.1.0"
+authors = ["Rivtower Technologies <contact@rivtower.com>"]
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+cita-types = { path = "../cita-types" }
+hashable = { path = "../hashable" }
+rlp = { path = "../rlp" }
+static_merkle_tree = "~0.1.1"
+
+[features]
+default = []
+sha3hash = ["hashable/sha3hash"]
+blake2bhash = ["hashable/blake2bhash"]
+sm3hash = ["hashable/sm3hash"]
