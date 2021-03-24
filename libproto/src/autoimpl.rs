@@ -188,6 +188,7 @@ macro_rules! loop_macro_for_structs {
             ReceiptErrorWithOption,
             ReceiptWithOption,
             StateRoot,
+            VcCommitment,
             BatchRequest,
             Call,
             Request,
